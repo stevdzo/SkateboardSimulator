@@ -17,8 +17,6 @@ ASKT_Character::ASKT_Character()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	TurnRate = 0.0f;
-	
 	// bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	// bUseControllerRotationRoll = false;
@@ -52,64 +50,35 @@ ASKT_Character::ASKT_Character()
 void ASKT_Character::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 void ASKT_Character::Move(const FInputActionValue& Value)
 {
 	const FVector2D MovementVector = Value.Get<FVector2D>();
 
-	DoMove(MovementVector.X, MovementVector.Y);
-}
-
-void ASKT_Character::MoveComplete(const FInputActionValue& Value)
-{
-	//MovementVector = FVector2D::ZeroVector;
-}
-
-void ASKT_Character::Look(const FInputActionValue& Value)
-{
-	const FVector2D LookAxisVector = Value.Get<FVector2D>();
-
-	DoLook(LookAxisVector.X, LookAxisVector.Y);
-}
-
-void ASKT_Character::DoMove(float Right, float Forward)
-{
-	AddMovementInput(GetActorForwardVector(), Forward);
+	AddMovementInput(GetActorForwardVector(), MovementVector.Y);
 
 	// const FRotator Rotation = Controller->GetControlRotation();
 	// const FRotator YawRotation(0, Rotation.Yaw, 0);
 	// const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 	// AddMovementInput(RightDirection, Right);
 	
-	TurnRate = Right;
+	TurnDirection = MovementVector.X;
 }
 
-void ASKT_Character::DoLook(float Yaw, float Pitch)
+void ASKT_Character::Look(const FInputActionValue& Value)
 {
+	const FVector2D LookAxisVector = Value.Get<FVector2D>();
+
 	if (GetController() != nullptr)
 	{
-		AddControllerYawInput(Yaw);
-		AddControllerPitchInput(Pitch);
+		AddControllerYawInput(LookAxisVector.X);
+		AddControllerPitchInput(LookAxisVector.Y);
 	}
 }
 
-void ASKT_Character::DoJumpStart()
+void ASKT_Character::UpdateRotation(const float DeltaTime)
 {
-	Jump();
-}
-
-void ASKT_Character::DoJumpEnd()
-{
-	StopJumping();
-}
-
-// Called every frame
-void ASKT_Character::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
 	if (GetCharacterMovement()->IsFalling())
 	{
 		return;
@@ -127,11 +96,27 @@ void ASKT_Character::Tick(float DeltaTime)
 	const float SpeedFactor = CurrentSpeed / FMath::Max(1.0f, GetCharacterMovement()->MaxWalkSpeed);
 	const float ActualRotationSpeed = BaseRotationSpeedDegreesPerSecond * SpeedFactor;
 	
-	const float YawDelta = TurnRate * ActualRotationSpeed * DeltaTime;
+	const float YawDelta = TurnDirection * ActualRotationSpeed * DeltaTime;
 	
-	FRotator DeltaRotation(0.f, YawDelta, 0.f);
+	const FRotator DeltaRotation(0.f, YawDelta, 0.f);
 	
 	AddActorWorldRotation(DeltaRotation);
+}
+
+void ASKT_Character::AddXP(int32 Amount)
+{
+	CurrentXP += Amount;
+
+	// Broadcast to all listeners (HUD Widget)
+	OnXPChanged.Broadcast(CurrentXP);
+}
+
+// Called every frame
+void ASKT_Character::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	
+	UpdateRotation(DeltaTime);
 }
 
 // Called to bind functionality to input

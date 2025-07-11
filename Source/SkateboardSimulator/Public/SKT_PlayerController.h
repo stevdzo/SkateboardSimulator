@@ -8,6 +8,7 @@
 
 class UInputMappingContext;
 class ASKT_Character;
+class USKT_HudWidget;
 
 /**
  * 
@@ -18,18 +19,21 @@ class SKATEBOARDSIMULATOR_API ASKT_PlayerController : public APlayerController
 	GENERATED_BODY()
 	
 public:
+
+	virtual void BeginPlay();
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadonly, Category = "Player Input|Character Movement")
 	TObjectPtr<UInputMappingContext> InputMappingContext = nullptr;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<USKT_HudWidget> UserInterfaceClass;
+	
+	UPROPERTY()
+	TObjectPtr<USKT_HudWidget> UserInterface = nullptr;
+	
 protected:
 
 	virtual void OnPossess(APawn* aPawn) override;
 	virtual void OnUnPossess() override;
 
-private:
-	
-	// A reference to the player character
-	UPROPERTY()
-	ASKT_Character* PlayerCharacter = nullptr;
 };

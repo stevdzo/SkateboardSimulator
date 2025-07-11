@@ -14,6 +14,8 @@ class UStaticMeshComponent;
 
 struct FInputActionValue;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnXPChanged, int32, NewXP);
+
 UCLASS()
 class SKATEBOARDSIMULATOR_API ASKT_Character : public ACharacter
 {
@@ -24,6 +26,9 @@ public:
 	ASKT_Character();
 
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnXPChanged OnXPChanged;
 	
 protected:
 	// Called when the game starts or when spawned
@@ -39,26 +44,17 @@ protected:
 	TObjectPtr<UInputAction> ActionJump = nullptr;
 
 	void Move(const FInputActionValue& Value);
-	void MoveComplete(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
+
+	void UpdateRotation(const float DeltaTime);
 	
 public:
-
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoMove(float Right, float Forward);
-
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoLook(float Yaw, float Pitch);
-
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoJumpStart();
-
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoJumpEnd();
 	
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	UFUNCTION(BlueprintCallable)
+	void AddXP(int32 Amount);
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<USpringArmComponent> CameraBoom = nullptr;
 
@@ -75,9 +71,6 @@ public:
 	float MaxSpeed = 1200.f;
 
 	UPROPERTY(EditAnywhere, Category = "Movement")
-	float AccelerationRate = 600.f;
-
-	UPROPERTY(EditAnywhere, Category = "Movement")
-	float TurnRate = 100.f;
+	float TurnDirection = 0.0f;
 	
 };
